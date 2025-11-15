@@ -270,3 +270,79 @@ final_driver_summary <- union_data %>%
 model_1 <- lm(points_acc ~ Price, data = final_driver_summary)
 summary(model_1)
 ```
+
+# Per event
+```{r}
+racepoints$event_id <- paste(racepoints$year,racepoints$event_name)
+racepoints_events = racepoints %>% 
+  group_by(event_id, driver_code) %>% 
+  summarise(point_event = sum(points_real), .groups = "drop")
+countPoints_events <- racepoints_events %>%
+  group_by(driver_code, event_id)%>%
+  summarise(
+    `Total Points per Event` = sum(point_event, na.rm = TRUE), 
+    .groups = "drop") %>% 
+  arrange(desc(`Total Points per Event`), event_id)
+kable(countPoints_events)
+
+QualificationResult$event_id <- paste(QualificationResult$year, QualificationResult$event_name)
+qualifypoints_events <- QualificationResult %>% 
+  group_by(driver_code, event_id) %>%
+  summarise(total_points_qualify = sum(points, na.rm = TRUE)) 
+
+union_data_events <- left_join(countPoints_events, qualifypoints_events, 
+                        by = c("driver_code", "event_id"))
+union_data_events <- union_data_events %>% 
+  mutate(subtotal = `Total Points per Event` + total_points_qualify) %>%
+  select(driver_code, event_id, subtotal) %>%
+  arrange(desc(subtotal))
+kable(union_data_events)
+
+
+LapTimePerDriver_events <- laps_modified %>%
+  filter(
+    !is.na(LapTimeInSeconds) & LapTimeInSeconds > 0,
+    IsAccurate == TRUE,
+    !Deleted
+  ) %>% 
+  group_by(event_id) %>%
+  filter(LapTimeInSeconds == min(LapTimeInSeconds, na.rm = TRUE)) %>%
+  ungroup() %>%
+  distinct(event_id, .keep_all = TRUE) %>%
+  select(driver_code = Driver, 
+         fastest_lap_time = LapTimeInSeconds, 
+         event_id, 
+         year)
+
+LapTimePerDriver_events <- LapTimePerDriver_events %>% mutate(
+  points_add = 10)
+
+fastest_lap_points_events <- LapTimePerDriver_events %>% 
+  group_by(driver_code, event_id) %>%
+  summarise(point_fastest = sum(points_add))
+
+union_data_events <- left_join(union_data_events, fastest_lap_points_events, 
+                        by = c("driver_code", "event_id"))
+
+union_data_events <- union_data_events %>% 
+  mutate(point_fastest_conv = case_when(
+    !is.na(point_fastest) ~ point_fastest, 
+    TRUE ~ 0))
+
+union_data_events <- union_data_events %>% 
+  mutate(points_events = subtotal + point_fastest_conv) %>%
+  select(driver_code, event_id, points_events) %>%
+  arrange(desc(points_events))
+kable(union_data_events)
+
+points_events <- left_join(DriverPrice, union_data_events, by = c("Driver Code" = "driver_code"))
+kable(points_year)
+
+points_by_events <- points_events %>% arrange(event_id) %>% pivot_wider(
+  names_from = event_id,
+  values_from = points_events,
+  id_cols = c(`Driver Code`, Driver),
+  values_fill = 0
+)
+kable(points_by_events)
+```
