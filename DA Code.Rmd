@@ -260,3 +260,14 @@ for (current_driver in all_drivers){
   print(driver_plot)
 }
 ```
+
+```{r}
+# Linear Regression for Points-to-Price
+final_driver_summary <- union_data %>%
+  select(`Driver Code`, Driver, Price, points_acc) %>%
+  mutate(point_per_cost = points_acc / Price) %>%
+  arrange(desc(point_per_cost))
+
+model_1 <- lm(points_acc ~ Price, data = final_driver_summary)
+summary(model_1)
+```
