@@ -1,0 +1,97 @@
+driver_id,driver_number,driver_code,driver_name,team_name
+bottas,77,BOT,Valtteri Bottas,Mercedes
+leclerc,16,LEC,Charles Leclerc,Ferrari
+norris,4,NOR,Lando Norris,McLaren
+hamilton,44,HAM,Lewis Hamilton,Mercedes
+sainz,55,SAI,Carlos Sainz,McLaren
+perez,11,PER,Sergio Perez,Racing Point
+gasly,10,GAS,Pierre Gasly,AlphaTauri
+ocon,31,OCO,Esteban Ocon,Renault
+giovinazzi,99,GIO,Antonio Giovinazzi,Alfa Romeo Racing
+vettel,5,VET,Sebastian Vettel,Ferrari
+latifi,6,LAT,Nicholas Latifi,Williams
+kvyat,26,KVY,Daniil Kvyat,AlphaTauri
+albon,23,ALB,Alexander Albon,Red Bull Racing
+raikkonen,7,RAI,Kimi Räikkönen,Alfa Romeo Racing
+russell,63,RUS,George Russell,Williams
+grosjean,8,GRO,Romain Grosjean,Haas F1 Team
+kevin_magnussen,20,MAG,Kevin Magnussen,Haas F1 Team
+stroll,18,STR,Lance Stroll,Racing Point
+ricciardo,3,RIC,Daniel Ricciardo,Renault
+max_verstappen,33,VER,Max Verstappen,Red Bull Racing
+hulkenberg,27,HUL,Nico Hulkenberg,Racing Point
+russell,63,RUS,George Russell,Mercedes
+aitken,89,AIT,Jack Aitken,Williams
+pietro_fittipaldi,51,FIT,Pietro Fittipaldi,Haas F1 Team
+perez,11,PER,Sergio Perez,Red Bull Racing
+ricciardo,3,RIC,Daniel Ricciardo,McLaren
+sainz,55,SAI,Carlos Sainz,Ferrari
+tsunoda,22,TSU,Yuki Tsunoda,AlphaTauri
+stroll,18,STR,Lance Stroll,Aston Martin
+ocon,31,OCO,Esteban Ocon,Alpine
+vettel,5,VET,Sebastian Vettel,Aston Martin
+mick_schumacher,47,MSC,Mick Schumacher,Haas F1 Team
+alonso,14,ALO,Fernando Alonso,Alpine
+mazepin,9,MAZ,Nikita Mazepin,Haas F1 Team
+nan,47,MSC,Mick Schumacher,Haas F1 Team
+kubica,88,KUB,Robert Kubica,Alfa Romeo Racing
+bottas,77,BOT,Valtteri Bottas,Alfa Romeo
+zhou,24,ZHO,Guanyu Zhou,Alfa Romeo
+albon,23,ALB,Alexander Albon,Williams
+hulkenberg,27,HUL,Nico Hulkenberg,Aston Martin
+max_verstappen,1,VER,Max Verstappen,Red Bull Racing
+de_vries,45,DEV,Nyck De Vries,Williams
+alonso,14,ALO,Fernando Alonso,Aston Martin
+gasly,10,GAS,Pierre Gasly,Alpine
+sargeant,2,SAR,Logan Sargeant,Williams
+de_vries,21,DEV,Nyck De Vries,AlphaTauri
+hulkenberg,27,HUL,Nico Hulkenberg,Haas F1 Team
+piastri,81,PIA,Oscar Piastri,McLaren
+nan,21,DEV,Nyck De Vries,AlphaTauri
+ricciardo,3,RIC,Daniel Ricciardo,AlphaTauri
+nan,3,RIC,Daniel Ricciardo,AlphaTauri
+lawson,40,LAW,Liam Lawson,AlphaTauri
+nan,40,LAW,Liam Lawson,AlphaTauri
+,1,VER,Max Verstappen,Red Bull Racing
+,11,PER,Sergio Perez,Red Bull Racing
+,16,LEC,Charles Leclerc,Ferrari
+,63,RUS,George Russell,Mercedes
+,4,NOR,Lando Norris,McLaren
+,81,PIA,Oscar Piastri,McLaren
+,14,ALO,Fernando Alonso,Aston Martin
+,22,TSU,Yuki Tsunoda,AlphaTauri
+,44,HAM,Lewis Hamilton,Mercedes
+,18,STR,Lance Stroll,Aston Martin
+,3,RIC,Daniel Ricciardo,AlphaTauri
+,31,OCO,Esteban Ocon,Alpine
+,10,GAS,Pierre Gasly,Alpine
+,23,ALB,Alexander Albon,Williams
+,27,HUL,Nico Hulkenberg,Haas F1 Team
+,2,SAR,Logan Sargeant,Williams
+,24,ZHO,Guanyu Zhou,Alfa Romeo
+,55,SAI,Carlos Sainz,Ferrari
+,77,BOT,Valtteri Bottas,Alfa Romeo
+,20,MAG,Kevin Magnussen,Haas F1 Team
+zhou,24,ZHO,Guanyu Zhou,Kick Sauber
+ricciardo,3,RIC,Daniel Ricciardo,RB
+bottas,77,BOT,Valtteri Bottas,Kick Sauber
+tsunoda,22,TSU,Yuki Tsunoda,RB
+colapinto,43,COL,Franco Colapinto,Williams
+bearman,50,BEA,Oliver Bearman,Haas F1 Team
+lawson,30,LAW,Liam Lawson,RB
+doohan,61,DOO,Jack Doohan,Alpine
+antonelli,12,ANT,Andrea Kimi Antonelli,Mercedes
+hulkenberg,27,HUL,Nico Hulkenberg,Kick Sauber
+hamilton,44,HAM,Lewis Hamilton,Ferrari
+tsunoda,22,TSU,Yuki Tsunoda,Racing Bulls
+ocon,31,OCO,Esteban Ocon,Haas F1 Team
+bearman,87,BEA,Oliver Bearman,Haas F1 Team
+lawson,30,LAW,Liam Lawson,Red Bull Racing
+bortoleto,5,BOR,Gabriel Bortoleto,Kick Sauber
+sainz,55,SAI,Carlos Sainz,Williams
+doohan,7,DOO,Jack Doohan,Alpine
+hadjar,6,HAD,Isack Hadjar,Racing Bulls
+antonelli,12,ANT,Kimi Antonelli,Mercedes
+tsunoda,22,TSU,Yuki Tsunoda,Red Bull Racing
+lawson,30,LAW,Liam Lawson,Racing Bulls
+colapinto,43,COL,Franco Colapinto,Alpine
