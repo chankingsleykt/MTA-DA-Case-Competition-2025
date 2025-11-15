@@ -1,0 +1,260 @@
+---
+title: "DA Competition"
+author: "Christopher Daniel Hitijahubessy"
+date: "2025-11-11"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, message = FALSE}
+# Datasets
+rm(list=ls()) # Clear the console
+graphics.off() # Clear the graphics window
+options(scipen=20) # Turn off scientific notation
+if (!require("tidyverse")) install.packages("tidyverse")
+if (!require("ggplot2")) install.packages("ggplot2")
+if (!require("readr")) install.packages("readr")
+if (!require("lubridate")) install.packages("lubridate")
+if (!require("sqldf")) install.packages("sqldf")
+library(sqldf)
+library(lubridate)
+library(tidyverse)
+library(knitr)
+library(sqldf)
+Constructors <- read_csv("DA Competition/Constructors.csv")
+
+DriverPrice <- read_csv("DA Competition/DriverPrice.csv")
+
+Drivers <- read_csv("DA Competition/Drivers.csv")
+
+laps <- read_csv("DA Competition/laps.csv")
+
+QualificationResult <- read_csv("DA Competition/QualificationResult.csv")
+
+RaceResult <- read_csv("DA Competition/RaceResult.csv")
+
+RaceSchedule <- read_csv("DA Competition/RaceSchedule.csv")
+```
+
+```{r}
+# Converting status in RaceResult
+RaceResult <- RaceResult %>%
+  mutate(status_conv = case_when(
+    status %in% c("+2 Laps", 
+                "+1 Lap", 
+                "+5 Laps", 
+                "+3 Laps", 
+                "Finished", 
+                "Lapped", 
+                "+6 Laps") ~ "Finished",
+    TRUE ~ "Not Finished"
+  ))
+
+## Convert to points based on position and status in RaceResult dataset
+racepoints <- RaceResult %>%
+  mutate(points_conv = case_when(
+    (position == 1 & status_conv == "Finished") ~ 10,
+    (position == 2 & status_conv == "Finished") ~ 9,
+    (position == 3 & status_conv == "Finished") ~ 8,
+    (position == 4 & status_conv == "Finished")~ 7,
+    (position == 5 & status_conv == "Finished") ~ 6,
+    (position == 6 & status_conv == "Finished") ~ 5,
+    (position == 7 & status_conv == "Finished") ~ 4,
+    (position == 8 & status_conv == "Finished") ~ 3,
+    (position == 9 & status_conv == "Finished") ~ 2,
+    (position == 10 & status_conv == "Finished") ~ 1,
+    (position %in% c(11, 12, 13, 14, 15, 16, 17, 18, 19, 20) &
+       status_conv == "Finished") ~ 0,
+    TRUE ~ -20
+  ),
+  point_gain_loss = ifelse( # Calculate points from position gained and lost
+    is.na(grid_position) | is.na(position),
+    0, 
+    grid_position - position
+  ))
+
+# Sum up points
+racepoints <- racepoints %>% 
+  mutate(points_real = points_conv + point_gain_loss)
+
+# Combine DriverPrice and racepoints
+DriverPriceResult <- left_join(DriverPrice, racepoints, 
+                               by = c("Driver Code"= "driver_code"))
+
+# Combining points per driver
+countPoints <- DriverPriceResult %>%
+  group_by(`Driver Code`, `Driver`)%>%
+  summarise(
+    `Price` = max(Price), 
+    `Total Points` = sum(points_real, na.rm = TRUE), 
+    .groups = "drop") %>% 
+  arrange(desc(`Total Points`))
+kable(countPoints)
+
+### Miscellaneous - checking NA's in position and grid_position column
+RR_Miscellaneous <- racepoints %>%
+  filter(is.na(position) | is.na(grid_position))
+```
+
+## Qualification Result Table
+```{r}
+# Converting positions to points
+QualificationResult <- QualificationResult %>% 
+  mutate(points = case_when(
+  position == 1 ~ 10,
+  position == 2 ~ 9,
+  position == 3 ~ 8,
+  position == 4 ~ 7,
+  position == 5 ~ 6,
+  position == 6 ~ 5,
+  position == 7 ~ 4,
+  position == 8 ~ 3,
+  position == 9 ~ 2,
+  position == 10 ~ 1,
+  TRUE ~ 0
+))
+
+#Sum all the points
+qualifypoints <- QualificationResult %>% 
+  group_by(driver_code) %>%
+  summarise(total_points_qualify = sum(points, na.rm = TRUE)) 
+
+kable(qualifypoints)
+
+# Combining countPoints and qualifypoints (excluding fastest lap)
+union_data <- left_join(countPoints, qualifypoints, 
+                        by = c("Driver Code" = "driver_code"))
+union_data <- union_data %>% 
+  mutate(subtotal = `Total Points` + total_points_qualify) %>%
+  arrange(desc(subtotal))
+kable(union_data)
+```
+
+```{r}
+
+laps_modified <- laps %>% mutate(LapTimeInSeconds = (as.numeric(str_extract(LapTime, "\\d{2}(?=:\\d{2}\\.\\d)")) * 60) + as.numeric(str_extract(LapTime, "\\d{2}\\.\\d+")))
+
+# add a new id column in RaceResult and laps_modified that assigns a unique id to each event
+RaceResult$event_id <- paste(RaceResult$year,RaceResult$event_name)
+laps_modified$event_id <- paste(laps_modified$year,laps_modified$event_name)
+
+# construct a table that displays the driver and the minimum lap time per event. Note laps_modified contains entries where LapTimeInSeconds is 0 at the start of every new driver's records, these values have been rejected  
+LapTimePerDriver <- sqldf("SELECT Driver, MIN(LapTimeInSeconds), event_id FROM laps_modified WHERE LapTimeInSeconds > 0 AND IsAccurate = TRUE AND Deleted = FALSE GROUP BY event_id")
+
+
+LapTimePerDriver <- LapTimePerDriver %>%
+  mutate(points_add = 10) %>%
+  rename(driver_code = Driver)
+
+fastest_lap_points_acc <- LapTimePerDriver %>% 
+  group_by(driver_code) %>%
+  summarise(point_fastest = sum(points_add))
+
+union_data <- left_join(union_data, fastest_lap_points_acc, by = c("Driver Code" = "driver_code"))
+
+union_data <- union_data %>% 
+  mutate(point_fastest_conv = case_when(
+    !is.na(point_fastest) ~ point_fastest, 
+    TRUE ~ 0))
+
+union_data <- union_data %>%
+  mutate(points_acc = subtotal + point_fastest_conv) %>%
+  arrange(desc(points_acc)) %>%
+  select(Driver, points_acc)
+kable(union_data)
+```
+
+```{r}
+racepoints_year = racepoints %>% 
+  group_by(year, driver_code) %>% 
+  summarise(point_year = sum(points_real), .groups = "drop")
+countPoints_year <- racepoints_year %>%
+  group_by(driver_code, year)%>%
+  summarise(
+    `Total Points per Year` = sum(point_year, na.rm = TRUE), 
+    .groups = "drop") %>% 
+  arrange(desc(`Total Points per Year`), desc(year))
+kable(countPoints_year)
+
+qualifypoints_year <- QualificationResult %>% 
+  group_by(driver_code, year) %>%
+  summarise(total_points_qualify = sum(points, na.rm = TRUE)) 
+
+kable(qualifypoints)
+
+
+
+# Combining countPoints and qualifypoints (excluding fastest lap)
+union_data_year <- left_join(countPoints_year, qualifypoints_year, 
+                        by = c("driver_code", "year"))
+union_data_year <- union_data_year %>% 
+  mutate(subtotal = `Total Points per Year` + total_points_qualify) %>%
+  select(driver_code, year, subtotal) %>%
+  arrange(desc(subtotal))
+kable(union_data_year)
+
+
+LapTimePerDriver_year <- laps_modified %>%
+  filter(
+    !is.na(LapTimeInSeconds) & LapTimeInSeconds > 0,
+    IsAccurate == TRUE,
+    !Deleted
+  ) %>% 
+  group_by(event_id) %>%
+  filter(LapTimeInSeconds == min(LapTimeInSeconds, na.rm = TRUE)) %>%
+  ungroup() %>%
+  distinct(event_id, .keep_all = TRUE) %>%
+  select(driver_code = Driver, 
+         fastest_lap_time = LapTimeInSeconds, 
+         event_id, 
+         year)
+
+LapTimePerDriver_year <- LapTimePerDriver_year %>% mutate(
+  points_add = 10)
+
+fastest_lap_points_year <- LapTimePerDriver_year %>% 
+  group_by(driver_code, year) %>%
+  summarise(point_fastest = sum(points_add))
+
+union_data_year <- left_join(union_data_year, fastest_lap_points_year, 
+                        by = c("driver_code", "year"))
+
+union_data_year <- union_data_year %>% 
+  mutate(point_fastest_conv = case_when(
+    !is.na(point_fastest) ~ point_fastest, 
+    TRUE ~ 0))
+
+union_data_year <- union_data_year %>% 
+  mutate(points_year = subtotal + point_fastest_conv) %>%
+  select(driver_code, year, points_year) %>%
+  arrange(desc(points_year))
+kable(union_data_year)
+
+points_year <- left_join(DriverPrice, union_data_year, by = c("Driver Code" = "driver_code"))
+kable(points_year)
+
+points_by_year <- points_year %>% arrange(year) %>% pivot_wider(
+  names_from = year,
+  values_from = points_year,
+  id_cols = c(`Driver Code`, Driver),
+  values_fill = 0
+) %>%
+  arrange(desc(`2025`))
+kable(points_by_year)
+
+all_drivers <- unique(points_year$Driver)
+
+for (current_driver in all_drivers){
+  driver_data <- points_year %>%
+    filter(Driver == current_driver)
+  driver_plot <- ggplot(driver_data, aes(x = year, y = points_year)) +
+    geom_line() +
+    geom_point(size = 2) +
+    labs(x = "Year", y = "Points", 
+         title = current_driver)
+  print(driver_plot)
+}
+```
