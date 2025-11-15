@@ -236,6 +236,7 @@ kable(union_data_year)
 points_year <- left_join(DriverPrice, union_data_year, by = c("Driver Code" = "driver_code"))
 kable(points_year)
 
+# Categorize points by year for each driver (?)
 points_by_year <- points_year %>% arrange(year) %>% pivot_wider(
   names_from = year,
   values_from = points_year,
@@ -245,6 +246,7 @@ points_by_year <- points_year %>% arrange(year) %>% pivot_wider(
   arrange(desc(`2025`))
 kable(points_by_year)
 
+# Creating graph for each driver
 all_drivers <- unique(points_year$Driver)
 
 for (current_driver in all_drivers){
