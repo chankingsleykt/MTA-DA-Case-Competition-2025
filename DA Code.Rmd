@@ -162,8 +162,7 @@ union_data <- union_data %>%
 
 union_data <- union_data %>%
   mutate(points_acc = subtotal + point_fastest_conv) %>%
-  arrange(desc(points_acc)) %>%
-  select(Driver, points_acc)
+  arrange(desc(points_acc))
 kable(union_data)
 ```
 
