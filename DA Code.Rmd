@@ -346,3 +346,57 @@ points_by_events <- points_events %>% arrange(event_id) %>% pivot_wider(
 )
 kable(points_by_events)
 ```
+
+```{r}
+# Average Points per Year for each Driver
+racepoints_2 <- racepoints %>%
+  select(driver_code,year, event_id, event_name, points_real)
+head(racepoints_2)
+
+qualifypoints_2 <- QualificationResult %>%
+  group_by(driver_code, event_id) %>%
+  summarise(points_sum = sum(points, na.rm = TRUE), .groups = "drop")
+
+fastest_lap_2 <- laps_modified %>%
+  filter(
+    !is.na(LapTimeInSeconds) & LapTimeInSeconds > 0,
+    IsAccurate == TRUE,
+    !Deleted
+  ) %>% 
+  group_by(event_id) %>%
+  filter(LapTimeInSeconds == min(LapTimeInSeconds, na.rm = TRUE)) %>%
+  ungroup() %>%
+  distinct(event_id, .keep_all = TRUE) %>%
+  select(driver_code = Driver, event_id) %>%
+  mutate(points_lap = 10)
+
+summary_union_data <- racepoints_2 %>%
+  left_join(qualifypoints_2, by = c("driver_code", "event_id")) %>%
+  left_join(fastest_lap_2, by = c("driver_code", "event_id")) %>%
+  mutate(points_sum = replace_na(points_sum, 0),
+         points_lap = replace_na(points_lap, 0),
+         grand_total = points_real + points_sum + points_lap) %>%
+  inner_join(DriverPrice, by=c("driver_code" = "Driver Code")) %>%
+  select(Year = year, Event = event_name, Driver, grand_total) %>%
+  arrange(Year, Event, Driver)
+
+avg_union_data <- summary_union_data %>%
+  group_by(Driver, Year) %>%
+  summarise(number_events = n(),
+            total_points_per_year = sum(grand_total),
+            avg_points = mean(total_points_per_year), 
+            .groups = "drop") %>%
+  arrange(Driver, Year)
+head(avg_union_data)
+
+for (current_driver in all_drivers){
+  driver_data_2 <- avg_union_data %>%
+    filter(Driver == current_driver)
+  driver_plot_2 <- ggplot(driver_data_2, aes(x = Year, y = avg_points)) +
+    geom_line() +
+    geom_point(size = 2) +
+    labs(x = "Year", y = "Points", 
+         title = current_driver)
+  print(driver_plot_2)
+}
+```
