@@ -389,6 +389,15 @@ avg_union_data <- summary_union_data %>%
   arrange(Driver, Year)
 head(avg_union_data)
 
+points_by_year_2 <- avg_union_data %>% arrange(Year) %>% pivot_wider(
+  names_from = Year,
+  values_from = avg_points,
+  id_cols = Driver,
+  values_fill = 0
+) %>%
+  arrange(desc(`2025`))
+kable(points_by_year_2)
+
 for (current_driver in all_drivers){
   driver_data_2 <- avg_union_data %>%
     filter(Driver == current_driver)
