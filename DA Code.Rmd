@@ -415,7 +415,6 @@ for (current_driver in all_drivers){
 # Download the dataset in .csv file
 write_csv(final_driver_summary, "driver_summary.csv")
 write_csv(avg_union_data, "driver_trends.csv")
-write_csv(winning, "optimal_teams.csv")
 ```
 
 
