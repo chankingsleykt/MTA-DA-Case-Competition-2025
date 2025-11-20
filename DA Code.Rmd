@@ -1,6 +1,6 @@
 ---
 title: "DA Competition"
-author: "Christopher Daniel Hitijahubessy"
+author: "The Four Quadrants"
 date: "2025-11-11"
 output: pdf_document
 ---
@@ -24,19 +24,19 @@ library(lubridate)
 library(tidyverse)
 library(knitr)
 library(sqldf)
-Constructors <- read_csv("f1_data/Constructors.csv")
+Constructors <- read_csv("DA Competition/Constructors.csv")
 
-DriverPrice <- read_csv("f1_data//DriverPrice.csv")
+DriverPrice <- read_csv("DA Competition/DriverPrice.csv")
 
-Drivers <- read_csv("f1_data/Drivers.csv")
+Drivers <- read_csv("DA Competition/Drivers.csv")
 
-laps <- read_csv("f1_data//laps.csv")
+laps <- read_csv("DA Competition/laps.csv")
 
-QualificationResult <- read_csv("f1_data//QualificationResult.csv")
+QualificationResult <- read_csv("DA Competition/QualificationResult.csv")
 
-RaceResult <- read_csv("f1_data//RaceResult.csv")
+RaceResult <- read_csv("DA Competition/RaceResult.csv")
 
-RaceSchedule <- read_csv("f1_data//RaceSchedule.csv")
+RaceSchedule <- read_csv("DA Competition/RaceSchedule.csv")
 ```
 
 ```{r}
@@ -167,6 +167,7 @@ kable(union_data)
 ```
 
 ```{r}
+
 racepoints_year = racepoints %>% 
   group_by(year, driver_code) %>% 
   summarise(point_year = sum(points_real), .groups = "drop")
@@ -176,13 +177,13 @@ countPoints_year <- racepoints_year %>%
     `Total Points per Year` = sum(point_year, na.rm = TRUE), 
     .groups = "drop") %>% 
   arrange(desc(`Total Points per Year`), desc(year))
-kable(countPoints_year)
+head(countPoints_year)
 
 qualifypoints_year <- QualificationResult %>% 
   group_by(driver_code, year) %>%
   summarise(total_points_qualify = sum(points, na.rm = TRUE)) 
 
-kable(qualifypoints)
+head(qualifypoints)
 
 
 
@@ -193,7 +194,7 @@ union_data_year <- union_data_year %>%
   mutate(subtotal = `Total Points per Year` + total_points_qualify) %>%
   select(driver_code, year, subtotal) %>%
   arrange(desc(subtotal))
-kable(union_data_year)
+head(union_data_year)
 
 
 LapTimePerDriver_year <- laps_modified %>%
@@ -230,12 +231,11 @@ union_data_year <- union_data_year %>%
   mutate(points_year = subtotal + point_fastest_conv) %>%
   select(driver_code, year, points_year) %>%
   arrange(desc(points_year))
-kable(union_data_year)
+head(union_data_year)
 
 points_year <- left_join(DriverPrice, union_data_year, by = c("Driver Code" = "driver_code"))
-kable(points_year)
+head(points_year)
 
-# Categorize points by year for each driver (?)
 points_by_year <- points_year %>% arrange(year) %>% pivot_wider(
   names_from = year,
   values_from = points_year,
@@ -243,9 +243,8 @@ points_by_year <- points_year %>% arrange(year) %>% pivot_wider(
   values_fill = 0
 ) %>%
   arrange(desc(`2025`))
-kable(points_by_year)
+head(points_by_year)
 
-# Creating graph for each driver
 all_drivers <- unique(points_year$Driver)
 
 for (current_driver in all_drivers){
@@ -261,7 +260,6 @@ for (current_driver in all_drivers){
 ```
 
 ```{r}
-# Linear Regression for Points-to-Price
 final_driver_summary <- union_data %>%
   select(`Driver Code`, Driver, Price, points_acc) %>%
   mutate(point_per_cost = points_acc / Price) %>%
@@ -271,7 +269,6 @@ model_1 <- lm(points_acc ~ Price, data = final_driver_summary)
 summary(model_1)
 ```
 
-# Per event
 ```{r}
 racepoints$event_id <- paste(racepoints$year,racepoints$event_name)
 racepoints_events = racepoints %>% 
@@ -283,7 +280,7 @@ countPoints_events <- racepoints_events %>%
     `Total Points per Event` = sum(point_event, na.rm = TRUE), 
     .groups = "drop") %>% 
   arrange(desc(`Total Points per Event`), event_id)
-kable(countPoints_events)
+head(countPoints_events)
 
 QualificationResult$event_id <- paste(QualificationResult$year, QualificationResult$event_name)
 qualifypoints_events <- QualificationResult %>% 
@@ -296,7 +293,7 @@ union_data_events <- union_data_events %>%
   mutate(subtotal = `Total Points per Event` + total_points_qualify) %>%
   select(driver_code, event_id, subtotal) %>%
   arrange(desc(subtotal))
-kable(union_data_events)
+head(union_data_events)
 
 
 LapTimePerDriver_events <- laps_modified %>%
@@ -333,10 +330,10 @@ union_data_events <- union_data_events %>%
   mutate(points_events = subtotal + point_fastest_conv) %>%
   select(driver_code, event_id, points_events) %>%
   arrange(desc(points_events))
-kable(union_data_events)
+head(union_data_events)
 
 points_events <- left_join(DriverPrice, union_data_events, by = c("Driver Code" = "driver_code"))
-kable(points_year)
+head(points_events)
 
 points_by_events <- points_events %>% arrange(event_id) %>% pivot_wider(
   names_from = event_id,
@@ -344,11 +341,9 @@ points_by_events <- points_events %>% arrange(event_id) %>% pivot_wider(
   id_cols = c(`Driver Code`, Driver),
   values_fill = 0
 )
-kable(points_by_events)
 ```
 
 ```{r}
-# Average Points per Year for each Driver
 racepoints_2 <- racepoints %>%
   select(driver_code,year, event_id, event_name, points_real)
 head(racepoints_2)
@@ -407,122 +402,13 @@ for (current_driver in all_drivers){
   driver_data_2 <- avg_union_data %>%
     filter(Driver == current_driver)
   driver_plot_2 <- ggplot(driver_data_2, aes(x = Year, y = avg_points)) +
-    geom_line() +
+    geom_line(aes(group = 1), color = "blue", linewidth = 1) +
     geom_point(size = 2) +
+    scale_x_continuous(breaks = unique(driver_data_2$Year)) +
     labs(x = "Year", y = " Average Points", 
          title = current_driver)
   print(driver_plot_2)
 }
-```
-
-```{r}
-# List all driver combinations
-
-driver_combinations <- data.frame(D1=character(), D2=character(), D3=character(), D4=character(), D5=character(), D6=character(), D7=character(), D8=character(), D9=character(), D10=character(), D11=character(), D12=character(), D13=character(), D14=character(), D15=character(), D16=character(), D17=character(), D18=character(), D19=character(), D20=character())
-for (combo in 1:20) {
-  combination  <- t(combn(final_driver_summary$`Driver Code`, combo)) %>% as.data.frame()
-  i = combo+1
-  while(i <= 20) {
-    # print(paste0(combo, ": ", i))
-    # Generate random values for the new column
-    new_col_values <- NA
-
-  # Create a dynamic column name
-    new_col_name <- paste0("V", i)
-  
-    # Assign the new column to the data frame
-    combination[[new_col_name]] <- new_col_values
-    i = i + 1
-  }
-  driver_combinations <- rbind(driver_combinations, combination)
-}
-```
-
-```{r}
-
-driver_combinations <- driver_combinations %>%
-  left_join(final_driver_summary, by = c("V1" = "Driver Code")) %>%
-  rename(D1_Name = Driver, D1_Price = Price, D1_Points = points_acc)
-driver_combinations <- driver_combinations %>%
-  left_join(final_driver_summary, by = c("V2" = "Driver Code")) %>%
-  rename(D2_Name = Driver, D2_Price = Price, D2_Points = points_acc)
-driver_combinations <- driver_combinations %>%
-  left_join(final_driver_summary, by = c("V3" = "Driver Code")) %>%
-  rename(D3_Name = Driver, D3_Price = Price, D3_Points = points_acc)
-driver_combinations <- driver_combinations %>%
-  left_join(final_driver_summary, by = c("V4" = "Driver Code")) %>%
-  rename(D4_Name = Driver, D4_Price = Price, D4_Points = points_acc)
-driver_combinations <- driver_combinations %>%
-  left_join(final_driver_summary, by = c("V5" = "Driver Code")) %>%
-  rename(D5_Name = Driver, D5_Price = Price, D5_Points = points_acc)
-driver_combinations <- driver_combinations %>%
-  left_join(final_driver_summary, by = c("V6" = "Driver Code")) %>%
-  rename(D6_Name = Driver, D6_Price = Price, D6_Points = points_acc)
-driver_combinations <- driver_combinations %>%
-  left_join(final_driver_summary, by = c("V7" = "Driver Code")) %>%
-  rename(D7_Name = Driver, D7_Price = Price, D7_Points = points_acc)
-driver_combinations <- driver_combinations %>%
-  left_join(final_driver_summary, by = c("V8" = "Driver Code")) %>%
-  rename(D8_Name = Driver, D8_Price = Price, D8_Points = points_acc)
-driver_combinations <- driver_combinations %>%
-  left_join(final_driver_summary, by = c("V9" = "Driver Code")) %>%
-  rename(D9_Name = Driver, D9_Price = Price, D9_Points = points_acc)
-driver_combinations <- driver_combinations %>%
-  left_join(final_driver_summary, by = c("V10" = "Driver Code")) %>%
-  rename(D10_Name = Driver, D10_Price = Price, D10_Points = points_acc)
-driver_combinations <- driver_combinations %>%
-  left_join(final_driver_summary, by = c("V11" = "Driver Code")) %>%
-  rename(D11_Name = Driver, D11_Price = Price, D11_Points = points_acc)
-driver_combinations <- driver_combinations %>%
-  left_join(final_driver_summary, by = c("V12" = "Driver Code")) %>%
-  rename(D12_Name = Driver, D12_Price = Price, D12_Points = points_acc)
-driver_combinations <- driver_combinations %>%
-  left_join(final_driver_summary, by = c("V13" = "Driver Code")) %>%
-  rename(D13_Name = Driver, D13_Price = Price, D13_Points = points_acc)
-driver_combinations <- driver_combinations %>%
-  left_join(final_driver_summary, by = c("V14" = "Driver Code")) %>%
-  rename(D14_Name = Driver, D14_Price = Price, D14_Points = points_acc)
-driver_combinations <- driver_combinations %>%
-  left_join(final_driver_summary, by = c("V15" = "Driver Code")) %>%
-  rename(D15_Name = Driver, D15_Price = Price, D15_Points = points_acc)
-driver_combinations <- driver_combinations %>%
-  left_join(final_driver_summary, by = c("V16" = "Driver Code")) %>%
-  rename(D16_Name = Driver, D16_Price = Price, D16_Points = points_acc)
-driver_combinations <- driver_combinations %>%
-  left_join(final_driver_summary, by = c("V17" = "Driver Code")) %>%
-  rename(D17_Name = Driver, D17_Price = Price, D17_Points = points_acc)
-driver_combinations <- driver_combinations %>%
-  left_join(final_driver_summary, by = c("V18" = "Driver Code")) %>%
-  rename(D18_Name = Driver, D18_Price = Price, D18_Points = points_acc)
-driver_combinations <- driver_combinations %>%
-  left_join(final_driver_summary, by = c("V19" = "Driver Code")) %>%
-  rename(D19_Name = Driver, D19_Price = Price, D19_Points = points_acc)
-driver_combinations <- driver_combinations %>%
-  left_join(final_driver_summary, by = c("V20" = "Driver Code")) %>%
-  rename(D20_Name = Driver, D20_Price = Price, D20_Points = points_acc)
-# Calculate the rate of team points gain per team cost, show the top 10
-winning <- driver_combinations %>%
-  mutate(
-    team_cost = sum(paste0("D", i, "_Price"), na.rm = TRUE),
-    team_points = sum(paste0("D", i, "_Points"), na.rm=TRUE),
-    team_points_cost = team_points / team_cost
-  ) %>%
-  arrange(desc(team_points)) %>%
-  select(D1_Name, D2_Name, D3_Name, D4_Name, D5_Name, D6_Name, D7_Name, D8_Name, D9_Name, D10_Name, D11_Name, D12_Name, D13_Name, D14_Name, D15_Name, D16_Name, D17_Name, D18_Name, D19_Name, D20_Name, team_points, team_cost, team_points_cost)
-
-kable(head(winning, 1))
-
-# Plot the points based on team cost and team price and highlight the team that has the highest points
-ggplot(winning, aes(x = team_points, y = team_points/team_cost)) +
-  geom_point(color = "grey") + 
-  geom_point(data = head(winning, 1), color = "red", size = 3) +
-  labs(
-    title = "Optimization: Cost vs. Points",
-    subtitle = "Each dot is a unique pair of drivers",
-    x = "Total Budget Required ($M)",
-    y = "Points/Budget"
-  ) +
-  theme_minimal()
 ```
 
 ```{r}
@@ -534,26 +420,40 @@ write_csv(winning, "optimal_teams.csv")
 
 
 ```{r}
-# PS: I use Gemini AI to find all best combinations per groups of drivers
+points_2025 <- points_by_year %>% 
+  select(`Driver Code`,Driver, `2025`) %>%
+  rename(pts = `2025`)
+points_2025 <- points_2025 %>%
+  left_join(DriverPrice, by = "Driver Code") %>%
+  mutate(rate = pts/Price) %>%
+  select(-Driver.y) %>%
+  rename(Driver = Driver.x)
+```
 
-# 1. Filter Positive Drivers
-positive_drivers <- final_driver_summary %>% filter(points_acc > 0)
+```{r}
+# --- COMPREHENSIVE SCENARIO ANALYSIS (Sizes 2 to 10) WITH NAMES ---
+
+# 1. Setup: Filter for positive drivers only
+positive_drivers <- points_2025 %>% filter(pts > 0)
 driver_codes <- positive_drivers$`Driver Code`
+
+# Create vectors for fast math
 prices <- setNames(positive_drivers$Price, driver_codes)
-points <- setNames(positive_drivers$points_acc, driver_codes)
+points <- setNames(positive_drivers$pts, driver_codes)
 
-# 2. Results Container
-results_list <- list()
+# --- NEW: Create a Name Lookup Map ---
+names_map <- setNames(positive_drivers$Driver, driver_codes) 
 
-# 3. Loop through team sizes (k)
-max_drivers <- length(driver_codes)
+# 2. Create a list to store ALL valid teams
+all_valid_teams_list <- list()
 
-for (k in 2:max_drivers) {
+# 3. Loop from Size 2 to Size 10
+for (k in 2:10) {
   
-  # A. Generate Combinations
+  # A. Generate Combinations (Matrix where each col is a team)
   combos <- combn(driver_codes, k)
   
-  # B. Calculate Cost & Points (Vectorized - No Left Join needed!)
+  # B. Calculate Cost & Points (Vectorized Speed)
   team_costs <- colSums(matrix(prices[combos], nrow = k))
   team_points <- colSums(matrix(points[combos], nrow = k))
   
@@ -563,37 +463,42 @@ for (k in 2:max_drivers) {
     Total_Cost = team_costs,
     Total_Points = team_points,
     Rate_Points_Cost = team_points/team_costs,
-    # Create the string "Driver1, Driver2, ..."
-    Drivers = apply(combos, 2, paste, collapse = ", ")
+    
+    # --- CHANGED: Convert Codes to Names before pasting ---
+    Drivers = apply(combos, 2, function(col) {
+      # Look up the full names
+      full_names <- names_map[col]
+      # Paste them together with a comma
+      paste(full_names, collapse = ", ")
+    })
   )
   
-  # D. Filter & Find Winner
-  best_team <- temp_df %>%
-    arrange(desc(Total_Points)) %>%
-    head(1)
+  # D. Filter for Budget
+  # We keep ALL teams that fit the budget
+  valid_teams <- temp_df %>%
+    filter(Total_Cost <= 100) %>%
+    arrange(desc(Total_Points))
   
-  # E. Save Result
-  if (nrow(best_team) > 0) {
-    results_list[[k]] <- best_team
+  # E. Save the results if any valid teams exist
+  if (nrow(valid_teams) > 0) {
+    all_valid_teams_list[[k]] <- valid_teams
   } else {
-    break 
+    message(paste("No teams fit the budget at size:", k))
   }
 }
 
-# 4. Final Table
-scenario_analysis <- bind_rows(results_list)
+# 4. Combine into one Big Dataframe
+all_possible_combinations <- bind_rows(all_valid_teams_list)
 
-# 5. Display
-kable(scenario_analysis)
+# 5. Show the Best Team for EACH Size
+best_per_size <- all_possible_combinations %>%
+  group_by(Team_Size) %>%
+  slice_max(Total_Points, n = 1) %>%
+  arrange(Team_Size)
 
-# 6. Plot (Cost vs Points for the Best Team of Each Size)
-ggplot(scenario_analysis, aes(x = Total_Cost, y = Total_Points)) +
-  geom_point(size = 3, color = "blue") +
-  geom_text(aes(label = paste("Size", Team_Size)), vjust = -0.5) +
-  labs(
-    title = "Optimization: Best Team for Each Size",
-    x = "Total Cost ($M)",
-    y = "Total Points"
-  ) +
-  theme_minimal()
+kable(best_per_size, caption = "Best Feasible Team by Size (2-10 Drivers)")
+
+# 6. (Optional) View the Top 10 Best Teams Overall (Any Size)
+kable(head(all_possible_combinations %>% arrange(desc(Total_Points)), 10), 
+      caption = "Top 10 Best Teams Overall (Any Size)")
 ```
