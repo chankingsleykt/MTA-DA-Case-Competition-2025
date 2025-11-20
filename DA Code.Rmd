@@ -541,7 +541,6 @@ positive_drivers <- final_driver_summary %>% filter(points_acc > 0)
 driver_codes <- positive_drivers$`Driver Code`
 prices <- setNames(positive_drivers$Price, driver_codes)
 points <- setNames(positive_drivers$points_acc, driver_codes)
-budget_cap <- 100
 
 # 2. Results Container
 results_list <- list()
@@ -570,7 +569,6 @@ for (k in 2:max_drivers) {
   
   # D. Filter & Find Winner
   best_team <- temp_df %>%
-    filter(Total_Cost <= budget_cap) %>%
     arrange(desc(Total_Points)) %>%
     head(1)
   
