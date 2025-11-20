@@ -414,3 +414,46 @@ for (current_driver in all_drivers){
   print(driver_plot_2)
 }
 ```
+
+```{r}
+# List all driver combinations
+driver_combinations <- t(combn(final_driver_summary$`Driver Code`, 2)) %>%
+  as.data.frame() %>%
+  rename(D1_Code = V1, D2_Code = V2)
+
+# Insert Driver based on D1_Code
+driver_combinations <- driver_combinations %>%
+  left_join(final_driver_summary, by = c("D1_Code" = "Driver Code")) %>%
+  rename(D1_Name = Driver, D1_Price = Price, D1_Points = points_acc) %>%
+  select(D1_Code, D2_Code, D1_Name, D1_Price, D1_Points)
+
+# Insert Driver based on D2_Code
+driver_combinations <- driver_combinations %>%
+  left_join(final_driver_summary, by = c("D2_Code" = "Driver Code")) %>%
+  rename(D2_Name = Driver, D2_Price = Price, D2_Points = points_acc) %>%
+  select(D1_Code, D2_Code, D1_Name, D1_Price, D1_Points, D2_Name, D2_Price, D2_Points)
+
+# Calculate the rate of team points gain per team cost, show the top 10
+winning <- driver_combinations %>%
+  mutate(
+    team_cost = D1_Price + D2_Price,
+    team_points = D1_Points + D2_Points,
+    team_points_cost = team_points / team_cost
+  ) %>%
+  arrange(desc(team_points)) %>%
+  select(D1_Name, D2_Name, team_points, team_cost, team_points_cost)
+
+kable(head(winning, 1))
+
+# Plot the points based on team cost and team price and highlight the team that has the highest points
+ggplot(winning, aes(x = team_cost, y = team_points)) +
+  geom_point(color = "grey") + 
+  geom_point(data = head(winning, 1), color = "red", size = 3) +
+  labs(
+    title = "Optimization: Cost vs. Points",
+    subtitle = "Each dot is a unique pair of drivers",
+    x = "Total Budget Required ($M)",
+    y = "Total Points Generated"
+  ) +
+  theme_minimal()
+```
