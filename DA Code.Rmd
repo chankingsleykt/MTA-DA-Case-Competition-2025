@@ -531,3 +531,71 @@ write_csv(final_driver_summary, "driver_summary.csv")
 write_csv(avg_union_data, "driver_trends.csv")
 write_csv(winning, "optimal_teams.csv")
 ```
+
+
+```{r}
+# PS: I use Gemini AI to find all best combinations per groups of drivers
+
+# 1. Filter Positive Drivers
+positive_drivers <- final_driver_summary %>% filter(points_acc > 0)
+driver_codes <- positive_drivers$`Driver Code`
+prices <- setNames(positive_drivers$Price, driver_codes)
+points <- setNames(positive_drivers$points_acc, driver_codes)
+budget_cap <- 100
+
+# 2. Results Container
+results_list <- list()
+
+# 3. Loop through team sizes (k)
+max_drivers <- length(driver_codes)
+
+for (k in 2:max_drivers) {
+  
+  # A. Generate Combinations
+  combos <- combn(driver_codes, k)
+  
+  # B. Calculate Cost & Points (Vectorized - No Left Join needed!)
+  team_costs <- colSums(matrix(prices[combos], nrow = k))
+  team_points <- colSums(matrix(points[combos], nrow = k))
+  
+  # C. Create Table
+  temp_df <- data.frame(
+    Team_Size = k,
+    Total_Cost = team_costs,
+    Total_Points = team_points,
+    Rate_Points_Cost = team_points/team_costs,
+    # Create the string "Driver1, Driver2, ..."
+    Drivers = apply(combos, 2, paste, collapse = ", ")
+  )
+  
+  # D. Filter & Find Winner
+  best_team <- temp_df %>%
+    filter(Total_Cost <= budget_cap) %>%
+    arrange(desc(Total_Points)) %>%
+    head(1)
+  
+  # E. Save Result
+  if (nrow(best_team) > 0) {
+    results_list[[k]] <- best_team
+  } else {
+    break 
+  }
+}
+
+# 4. Final Table
+scenario_analysis <- bind_rows(results_list)
+
+# 5. Display
+kable(scenario_analysis)
+
+# 6. Plot (Cost vs Points for the Best Team of Each Size)
+ggplot(scenario_analysis, aes(x = Total_Cost, y = Total_Points)) +
+  geom_point(size = 3, color = "blue") +
+  geom_text(aes(label = paste("Size", Team_Size)), vjust = -0.5) +
+  labs(
+    title = "Optimization: Best Team for Each Size",
+    x = "Total Cost ($M)",
+    y = "Total Points"
+  ) +
+  theme_minimal()
+```
