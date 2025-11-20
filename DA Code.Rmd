@@ -457,3 +457,10 @@ ggplot(winning, aes(x = team_cost, y = team_points)) +
   ) +
   theme_minimal()
 ```
+
+```{r}
+# Download the dataset in .csv file
+write_csv(final_driver_summary, "driver_summary.csv")
+write_csv(avg_union_data, "driver_trends.csv")
+write_csv(winning, "optimal_teams.csv")
+```
