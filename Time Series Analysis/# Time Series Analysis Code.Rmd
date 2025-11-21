@@ -1,0 +1,74 @@
+---
+title: "Prep for Time Series"
+output: html_document
+date: "2025-11-20"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(dplyr)
+library(prophet)
+
+df <- read.csv("# Time VS Point.csv")
+name_vector = c("Lando Norris",
+"Max Verstappen", 
+"Oscar Piastri",
+"George Russell",
+"Lewis Hamiliton",
+"Charles Leclerc",
+"Kimi Antonelli",
+"Alexander Albon",
+"Yuki Tsunoda",
+"Nico Hulkenberg",
+"Oliver Bearman",
+"Lance Stroll",
+"Esteban Ocon",
+"Carlos Sainz",
+"Gabriel Bortoleto",
+"Isack Hadjar",
+"Liam Lawson",
+"Fernando Alonso",
+"Pierre Gasly",
+"Franco Colapinto")
+for(name in name_vector) {
+  # Filter data for one driver
+  filtered_df <- df[df$Driver == name, ]
+
+  # Create Prophet columns: ds (date) and y (points)
+  filtered_df <- filtered_df %>%
+    mutate(
+      ds = as.Date(ds, format = "%m/%d/%Y"),
+      y  = as.numeric(y)
+    ) %>%
+    group_by(ds) %>%
+    summarise(y = sum(y, na.rm = TRUE), .groups = "drop") %>%
+    arrange(ds)
+  
+  # Export data frame as CSV
+  filename = paste0(name, " - Time VS Point.csv")
+  write.csv(filtered_df, filename, row.names = FALSE)
+  
+  # Skip data frames with less than 2 valid entries
+  filtered_df <- filtered_df %>% filter(!is.na(ds), !is.na(y))
+  if (nrow(filtered_df) < 2) {
+    message("Skipping ", name, ": not enough data.")
+    next
+  }
+  
+  # Prophet for time series analysis
+  model <- prophet(
+    filtered_df,
+    changepoint.prior.scale = 0.1,
+  )
+  next_race_date <- as.Date("2025-11-22")
+  future_specific <- data.frame(ds = next_race_date)
+  forecast_specific <- predict(model, future_specific)
+  forecast_specific$driver <- c(name)
+  forecast_specific$num_entries <- c(nrow(filtered_df))
+  print(forecast_specific[, c("ds", "yhat", "yhat_lower", "yhat_upper", "driver", "num_entries")])
+}
+```
+
