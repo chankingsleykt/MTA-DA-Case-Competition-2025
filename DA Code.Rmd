@@ -37,6 +37,8 @@ QualificationResult <- read_csv("DA Competition/QualificationResult.csv")
 RaceResult <- read_csv("DA Competition/RaceResult.csv")
 
 RaceSchedule <- read_csv("DA Competition/RaceSchedule.csv")
+
+PredictedLasVegas <-read_csv("Time Series Analysis/driver_forecasts_2025-11-23.csv")
 ```
 
 ```{r}
@@ -422,26 +424,25 @@ write_csv(avg_union_data, "driver_trends.csv")
 points_2025 <- points_by_year %>% 
   select(`Driver Code`,Driver, `2025`) %>%
   rename(pts = `2025`)
-points_2025 <- points_2025 %>%
-  left_join(DriverPrice, by = "Driver Code") %>%
-  mutate(rate = pts/Price) %>%
-  select(-Driver.y) %>%
-  rename(Driver = Driver.x)
+PredictedLasVegas <- PredictedLasVegas %>%
+  left_join(DriverPrice, by = "Driver") %>%
+  mutate(rate = yhat/Price)
 ```
 
 ```{r}
 # --- COMPREHENSIVE SCENARIO ANALYSIS (Sizes 2 to 10) WITH NAMES ---
 
 # 1. Setup: Filter for positive drivers only
-positive_drivers <- points_2025 %>% filter(pts > 0)
+positive_drivers <- PredictedLasVegas %>% filter(yhat > 0)
 driver_codes <- positive_drivers$`Driver Code`
+
 
 # Create vectors for fast math
 prices <- setNames(positive_drivers$Price, driver_codes)
-points <- setNames(positive_drivers$pts, driver_codes)
+points <- setNames(positive_drivers$yhat, driver_codes)
 
 # --- NEW: Create a Name Lookup Map ---
-names_map <- setNames(positive_drivers$Driver, driver_codes) 
+names_map <- setNames(positive_drivers$Driver, driver_codes)
 
 # 2. Create a list to store ALL valid teams
 all_valid_teams_list <- list()
@@ -500,4 +501,10 @@ kable(best_per_size, caption = "Best Feasible Team by Size (2-10 Drivers)")
 # 6. (Optional) View the Top 10 Best Teams Overall (Any Size)
 kable(head(all_possible_combinations %>% arrange(desc(Total_Points)), 10), 
       caption = "Top 10 Best Teams Overall (Any Size)")
+```
+```{r}
+max_points_event <- sqldf("SELECT Driver, Price, event_id, points_events FROM points_events ORDER BY points_events DESC")
+belgian_qualifiers <- sqldf("SELECT driver_code, total_points_qualify FROM qualifypoints_events WHERE event_id = '2022 Belgian Grand Prix' ORDER BY total_points_qualify DESC")
+belgian_fastest_lap <- sqldf("SELECT driver_code FROM fastest_lap_points_events WHERE event_id = '2022 Belgian Grand Prix'")
+belgian_grid_change <- sqldf("SELECT grid_position, position FROM RaceResult WHERE event_name = 'Belgian Grand Prix' AND year = 2022 AND driver_code = 'VER'")
 ```
