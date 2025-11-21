@@ -33,6 +33,15 @@ name_vector = c("Lando Norris",
 "Fernando Alonso",
 "Pierre Gasly",
 "Franco Colapinto")
+all_forecasts <- tibble(
+  Driver   = character(),
+  n_obs    = integer(),
+  ds       = as.Date(character()),
+  yhat     = numeric(),
+  yhat_lower = numeric(),
+  yhat_upper = numeric()
+)
+
 for(name in name_vector) {
   # Filter data for one driver
   filtered_df <- df[df$Driver == name, ]
@@ -63,12 +72,24 @@ for(name in name_vector) {
     filtered_df,
     changepoint.prior.scale = 0.1,
   )
-  next_race_date <- as.Date("2025-11-22")
+  next_race_date <- as.Date("2025-11-23")
   future_specific <- data.frame(ds = next_race_date)
   forecast_specific <- predict(model, future_specific)
   forecast_specific$driver <- c(name)
   forecast_specific$num_entries <- c(nrow(filtered_df))
-  print(forecast_specific[, c("ds", "yhat", "yhat_lower", "yhat_upper", "driver", "num_entries")])
+  this_row <- forecast_specific %>%
+    transmute(
+      Driver = name,
+      n_obs = num_entries,
+      ds,
+      yhat,
+      yhat_lower,
+      yhat_upper
+    )
+  all_forecasts <- bind_rows(all_forecasts, this_row)
 }
+write.csv(all_forecasts,
+          "# driver_forecasts_2025-11-23.csv",
+          row.names = FALSE)
 ```
 
